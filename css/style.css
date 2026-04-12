@@ -1827,6 +1827,10 @@ img {
         grid-template-columns: 1fr;
         gap: 2rem;
     }
+    .skill-carousel{
+        max-width: 80vw !important;
+        overflow: hidden;
+    }
 
     .skill-category {
         padding: 2rem;
