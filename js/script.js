@@ -20,6 +20,8 @@ function initializeApp() {
     initMobileMenu();
     updateLanguageUI();
     updateThemeUI();
+    getGitHubRepoCount('Oohcecilia');
+    renderSkills();
     AppState.isLoaded = true;
 }
 
@@ -48,7 +50,7 @@ function setLanguage(lang) {
     AppState.currentLang = lang;
     const html = document.documentElement;
     const body = document.body;
-    
+
     if (lang === 'ar') {
         html.setAttribute('lang', 'ar');
         html.setAttribute('dir', 'rtl');
@@ -74,7 +76,7 @@ function updateLanguageUI() {
             element.textContent = enText;
         }
     });
-    
+
     const placeholderElements = document.querySelectorAll('[data-placeholder-en], [data-placeholder-ar]');
     placeholderElements.forEach(element => {
         const enPlaceholder = element.getAttribute('data-placeholder-en');
@@ -85,7 +87,7 @@ function updateLanguageUI() {
             element.setAttribute('placeholder', enPlaceholder);
         }
     });
-    
+
     const langToggle = document.getElementById('langToggle');
     if (langToggle) {
         const langText = langToggle.querySelector('.lang-text');
@@ -132,16 +134,16 @@ function initNavigation() {
             e.preventDefault();
             const targetId = link.getAttribute('href');
             const targetSection = document.querySelector(targetId);
-            
+
             if (targetSection) {
                 const headerHeight = document.querySelector('.main-header').offsetHeight;
                 const targetPosition = targetSection.offsetTop - headerHeight;
-                
+
                 window.scrollTo({
                     top: targetPosition,
                     behavior: 'smooth'
                 });
-                
+
                 updateActiveNavLink(link);
                 if (AppState.isMenuOpen) {
                     toggleMobileMenu();
@@ -149,7 +151,7 @@ function initNavigation() {
             }
         });
     });
-    
+
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('scroll', updateHeaderOnScroll);
 }
@@ -157,12 +159,12 @@ function initNavigation() {
 function handleScroll() {
     const sections = document.querySelectorAll('section[id]');
     const scrollPosition = window.scrollY + 100;
-    
+
     sections.forEach(section => {
         const sectionTop = section.offsetTop;
         const sectionHeight = section.offsetHeight;
         const sectionId = section.getAttribute('id');
-        
+
         if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
             AppState.currentSection = sectionId;
             updateActiveNavLink(null, sectionId);
@@ -199,7 +201,7 @@ function initScrollEffects() {
         threshold: 0.1,
         rootMargin: '0px 0px -100px 0px'
     };
-    
+
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -208,33 +210,60 @@ function initScrollEffects() {
             }
         });
     }, observerOptions);
-    
+
     const fadeElements = document.querySelectorAll('.fade-in');
     fadeElements.forEach(element => observer.observe(element));
-    
+
     const sections = document.querySelectorAll('.section');
     sections.forEach(section => observer.observe(section));
 }
 
 function initFormHandlers() {
-    const contactForm = document.getElementById('contactForm');
-    if (contactForm) {
-        contactForm.addEventListener('submit', handleFormSubmit);
-    }
-}
 
-function handleFormSubmit(e) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData);
-    console.log('Form submitted:', data);
-    
-    const message = AppState.currentLang === 'ar' 
-        ? 'تم إرسال الرسالة بنجاح!' 
-        : 'Message sent successfully!';
-    
-    alert(message);
-    e.target.reset();
+    const contactForm = document.getElementById("contactForm");
+    if (!contactForm) return;
+
+    // Init EmailJS ONCE inside the function
+    emailjs.init("ttNS91UDVnylJD33V");
+
+    const submitBtn = contactForm.querySelector("button[type='submit']");
+
+    contactForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // UX: loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = "Sending email..";
+
+        const formData = {
+            name: contactForm.name.value.trim(),
+            email: contactForm.email.value.trim(),
+            subject: contactForm.subject.value.trim(),
+            message: contactForm.message.value.trim(),
+        };
+
+        try {
+            await emailjs.send(
+                "service_ceu19b7",
+                "template_wdegj3q",
+                formData
+            );
+
+            alert("Message sent successfully!");
+            contactForm.reset();
+
+        } catch (error) {
+            console.error("EmailJS Error:", error);
+            alert("Failed to send message. Please try again.");
+
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `
+                <span>Send Message</span>
+                <i class="fas fa-paper-plane"></i>
+            `;
+        }
+    });
 }
 
 function initMobileMenu() {
@@ -242,13 +271,13 @@ function initMobileMenu() {
     if (menuToggle) {
         menuToggle.addEventListener('click', toggleMobileMenu);
     }
-    
+
     document.addEventListener('click', (e) => {
         const navMenu = document.getElementById('navMenu');
         const menuToggle = document.getElementById('menuToggle');
-        
-        if (AppState.isMenuOpen && 
-            !navMenu.contains(e.target) && 
+
+        if (AppState.isMenuOpen &&
+            !navMenu.contains(e.target) &&
             !menuToggle.contains(e.target)) {
             toggleMobileMenu();
         }
@@ -259,11 +288,11 @@ function toggleMobileMenu() {
     AppState.isMenuOpen = !AppState.isMenuOpen;
     const navMenu = document.getElementById('navMenu');
     const menuToggle = document.getElementById('menuToggle');
-    
+
     if (navMenu) {
         navMenu.classList.toggle('active', AppState.isMenuOpen);
     }
-    
+
     if (menuToggle) {
         menuToggle.classList.toggle('active', AppState.isMenuOpen);
     }
@@ -272,10 +301,10 @@ function toggleMobileMenu() {
 function generateParticles() {
     const particlesContainer = document.getElementById('particles');
     if (!particlesContainer) return;
-    
+
     const codeSymbols = ['{', '}', '[', ']', '(', ')', '<', '>', '/', '*', '=', '+', '-', ';', ':', '&', '|', '%', '$', '#', '@'];
     const particleCount = 20;
-    
+
     for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
         particle.className = 'particle';
@@ -338,7 +367,7 @@ function initLoaderAnimation() {
     const loader = document.getElementById('loader');
     const loaderPercent = document.getElementById('loaderPercent');
     if (!loader || !loaderPercent) return;
-    
+
     let progress = 0;
     const progressInterval = setInterval(() => {
         progress += Math.random() * 15;
@@ -385,7 +414,7 @@ function initPageAnimations() {
 
 function initHeroAnimations() {
     if (typeof anime === 'undefined') return;
-    
+
     const heroName = document.getElementById('heroName');
     if (heroName) {
         const nameValue = heroName.querySelector('.name-value');
@@ -398,7 +427,7 @@ function initHeroAnimations() {
                 duration: 1500,
                 delay: 500,
                 easing: 'easeInOutQuad',
-                update: function(anim) {
+                update: function (anim) {
                     const length = Math.floor(anim.animatables[0].target.value);
                     nameValue.textContent = originalText.substring(0, length);
                 },
@@ -413,7 +442,7 @@ function initHeroAnimations() {
             });
         }
     }
-    
+
     const heroTitle = document.querySelector('.hero-title');
     if (heroTitle) {
         anime({
@@ -425,7 +454,7 @@ function initHeroAnimations() {
             easing: 'easeOutExpo'
         });
     }
-    
+
     const heroDescription = document.querySelector('.hero-description');
     if (heroDescription) {
         anime({
@@ -437,19 +466,19 @@ function initHeroAnimations() {
             easing: 'easeOutExpo'
         });
     }
-    
+
     const heroButtons = document.querySelectorAll('.hero-buttons .btn');
     if (heroButtons.length > 0) {
         anime({
             targets: heroButtons,
             opacity: [0, 1],
             scale: [0.8, 1],
-            delay: anime.stagger(100, {start: 1500}),
+            delay: anime.stagger(100, { start: 1500 }),
             duration: 800,
             easing: 'easeOutBack'
         });
     }
-    
+
     const socialIcons = document.querySelectorAll('.hero-social .social-icon');
     if (socialIcons.length > 0) {
         anime({
@@ -457,12 +486,12 @@ function initHeroAnimations() {
             opacity: [0, 1],
             scale: [0, 1],
             rotate: [180, 0],
-            delay: anime.stagger(100, {start: 2000}),
+            delay: anime.stagger(100, { start: 2000 }),
             duration: 800,
             easing: 'easeOutBack'
         });
     }
-    
+
     const profileImage = document.getElementById('profileImage');
     if (profileImage) {
         anime({
@@ -474,7 +503,7 @@ function initHeroAnimations() {
             duration: 1500,
             easing: 'easeOutElastic(1, .8)'
         });
-        
+
         profileImage.addEventListener('mouseenter', () => {
             anime({
                 targets: profileImage,
@@ -484,7 +513,7 @@ function initHeroAnimations() {
                 easing: 'easeOutElastic(1, .8)'
             });
         });
-        
+
         profileImage.addEventListener('mouseleave', () => {
             anime({
                 targets: profileImage,
@@ -495,7 +524,7 @@ function initHeroAnimations() {
             });
         });
     }
-    
+
     const badges = document.querySelectorAll('.floating-badge');
     if (badges.length > 0) {
         badges.forEach((badge, index) => {
@@ -514,7 +543,7 @@ function initHeroAnimations() {
 function initSkillAnimations() {
     const skillsSection = document.getElementById('skills');
     if (!skillsSection) return;
-    
+
     const skillItems = skillsSection.querySelectorAll('.skill-item');
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -523,7 +552,7 @@ function initSkillAnimations() {
                 const progressBar = skillItem.querySelector('.skill-progress');
                 const percentElement = skillItem.querySelector('.skill-percent');
                 const percent = parseInt(skillItem.getAttribute('data-percent') || 0);
-                
+
                 if (progressBar && typeof anime !== 'undefined') {
                     anime({
                         targets: progressBar,
@@ -532,14 +561,14 @@ function initSkillAnimations() {
                         easing: 'easeOutExpo',
                         delay: 300
                     });
-                    
+
                     anime({
                         targets: { value: 0 },
                         value: percent,
                         duration: 2000,
                         easing: 'easeOutExpo',
                         delay: 300,
-                        update: function(anim) {
+                        update: function (anim) {
                             if (percentElement) {
                                 percentElement.textContent = Math.floor(anim.animatables[0].target.value) + '%';
                             }
@@ -550,7 +579,7 @@ function initSkillAnimations() {
             }
         });
     }, { threshold: 0.5 });
-    
+
     skillItems.forEach(item => observer.observe(item));
 }
 
@@ -592,13 +621,13 @@ function initProjectAnimations() {
                 animateElement(card, { opacity: [0, 1], y: [50, 0], scale: [0.9, 1] }, { duration: 0.8, delay: index * 0.1 });
             }
         }, { amount: 0.2 });
-        
+
         card.addEventListener('mouseenter', () => {
             if (typeof anime !== 'undefined') {
                 anime({ targets: card, scale: [1, 1.02], duration: 300, easing: 'easeOutQuad' });
             }
         });
-        
+
         card.addEventListener('mouseleave', () => {
             if (typeof anime !== 'undefined') {
                 anime({ targets: card, scale: [1.02, 1], duration: 300, easing: 'easeOutQuad' });
@@ -623,7 +652,7 @@ function initScrollAnimations() {
             }
         }, { amount: 0.2 });
     });
-    
+
     const cards = document.querySelectorAll('.card, .project-card, .contact-item');
     cards.forEach((card, index) => {
         inView(card, () => {
@@ -654,7 +683,7 @@ function animateStats() {
                     value: target,
                     duration: 2000,
                     easing: 'easeOutExpo',
-                    update: function(anim) {
+                    update: function (anim) {
                         stat.textContent = Math.floor(anim.animatables[0].target.value);
                     }
                 });
@@ -682,7 +711,7 @@ function initContactAnimations() {
 function initParallax() {
     const profileImage = document.getElementById('profileImage');
     if (!profileImage) return;
-    
+
     let ticking = false;
     window.addEventListener('scroll', () => {
         if (!ticking) {
@@ -691,16 +720,16 @@ function initParallax() {
                 const parallaxSpeed = 0.3;
                 const maxOffset = 100;
                 const offset = Math.min(scrolled * parallaxSpeed, maxOffset);
-                
+
                 if (profileImage) {
                     profileImage.style.transform = `translateY(${offset}px)`;
                 }
-                
+
                 const gridBg = document.querySelector('.code-grid-bg');
                 if (gridBg) {
                     gridBg.style.transform = `translateY(${scrolled * 0.2}px)`;
                 }
-                
+
                 ticking = false;
             });
             ticking = true;
@@ -711,17 +740,17 @@ function initParallax() {
 function initSmoothScroll() {
     const sections = document.querySelectorAll('section[id]');
     const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
-    
+
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const targetId = link.getAttribute('href');
             const targetSection = document.querySelector(targetId);
-            
+
             if (targetSection) {
                 const headerHeight = document.querySelector('.main-header').offsetHeight;
                 const targetPosition = targetSection.offsetTop - headerHeight;
-                
+
                 if (typeof anime !== 'undefined') {
                     anime({
                         targets: window,
@@ -738,16 +767,16 @@ function initSmoothScroll() {
             }
         });
     });
-    
+
     let currentSection = '';
     window.addEventListener('scroll', () => {
         const scrollPos = window.scrollY + 150;
-        
+
         sections.forEach(section => {
             const sectionTop = section.offsetTop;
             const sectionHeight = section.offsetHeight;
             const sectionId = section.getAttribute('id');
-            
+
             if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
                 if (currentSection !== sectionId) {
                     currentSection = sectionId;
@@ -764,81 +793,68 @@ function initSmoothScroll() {
 }
 
 async function getGitHubRepoCount(username) {
-  try {
-    const res = await fetch(`https://api.github.com/users/${username}`);
-    
-    if (!res.ok) {
-      throw new Error("User not found");
+    try {
+        const res = await fetch(`https://api.github.com/users/${username}`);
+
+        if (!res.ok) {
+            throw new Error("User not found");
+        }
+
+        const data = await res.json();
+        
+        return data.public_repos; // total public repos
+    } catch (error) {
+        console.error("Error:", error.message);
+        return null;
     }
-
-    const data = await res.json();
-
-    console.log(JSON.stringify(data));
-
-    return data.public_repos; // total public repos
-  } catch (error) {
-    console.error("Error:", error.message);
-    return null;
-  }
 }
 
 
 function renderSkills() {
-  const container = document.getElementById("skills-container");
+    const container = document.getElementById("skills-container");
 
-  const skillsData = [
-  {
-    title: "programming languages",
-    items: ["Python", "JavaScript", "PHP", "SQL"]
-  },
-  {
-    title: "frontend",
-    items: ["React", "HTML5", "CSS3", "Bootstrap"]
-  },
-  {
-    title: "databases",
-    items: ["MySQL", "MariaDB", "MongoDB (Atlas)"]
-  },
-  {
-    title: "devOps",
-    items: ["Linux OS", "Docker", "Apache/Nginx", "SSH", "Git", "GitHub"]
-  }
-];
+    const skillsData = [
+        {
+            title: "programming languages",
+            items: ["Python", "JavaScript", "PHP", "SQL"]
+        },
+        {
+            title: "databases",
+            items: ["MySQL", "MariaDB", "MongoDB (Atlas)"]
+        },
+        {
+            title: "devOps",
+            items: ["Linux OS", "Docker", "Apache/Nginx", "SSH", "Git", "GitHub"]
+        }
+    ];
 
-  skillsData.forEach((group, index) => {
-    const line = document.createElement("div");
-    // line.className = "code-line indent";
+    skillsData.forEach((group, index) => {
+        const line = document.createElement("div");
+        // line.className = "code-line indent";
 
-    let html = `
+        let html = `
       <span class="code-property">${group.title}</span>
       <span class="code-operator">:</span>
       <span class="code-bracket">[</span>
     `;
 
-    group.items.forEach((item, i) => {
-      html += `<span class="code-string">'${item}'</span>`;
-      if (i < group.items.length - 1) {
-        html += `<span class="code-comma">,</span>`;
-      }
-    });
+        group.items.forEach((item, i) => {
+            html += `<span class="code-string">'${item}'</span>`;
+            if (i < group.items.length - 1) {
+                html += `<span class="code-comma">,</span>`;
+            }
+        });
 
-    html += `
+        html += `
       <span class="code-bracket">]</span>
       ${index < skillsData.length - 1 ? '<span class="code-comma">,</span>' : ''}
     `;
 
-    line.innerHTML = html;
-    container.appendChild(line);
-  });
+        line.innerHTML = html;
+        container.appendChild(line);
+    });
 }
 
-
-document.addEventListener("DOMContentLoaded", () => {
-  // runs when HTML is ready
-  getGitHubRepoCount('Oohcecilia');
-  renderSkills();
-  
-});
 
 window.Animations = {
     initParallax,
