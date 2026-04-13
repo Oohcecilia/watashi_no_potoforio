@@ -801,7 +801,7 @@ async function getGitHubRepoCount(username) {
         }
 
         const data = await res.json();
-        
+
         return data.public_repos; // total public repos
     } catch (error) {
         console.error("Error:", error.message);
@@ -811,6 +811,7 @@ async function getGitHubRepoCount(username) {
 
 
 function renderSkills() {
+    document.getElementById("year").textContent = new Date().getFullYear();
     const container = document.getElementById("skills-container");
 
     const skillsData = [
